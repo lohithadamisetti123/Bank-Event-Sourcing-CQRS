@@ -7,15 +7,38 @@ const SNAPSHOT_INTERVAL = 50;
 
 export async function getEventsForAggregate(aggregateId: string): Promise<BankEvent[]> {
   const { rows } = await query<BankEvent>(
-    "SELECT event_id as \"eventId\", aggregate_id as \"aggregateId\", aggregate_type as \"aggregateType\", event_type as \"eventType\", event_data as \"eventData\", event_number as \"eventNumber\", timestamp, version FROM events WHERE aggregate_id = $1 ORDER BY event_number ASC",
+    `SELECT event_id as "eventId",
+            aggregate_id as "aggregateId",
+            aggregate_type as "aggregateType",
+            event_type as "eventType",
+            event_data as "eventData",
+            event_number as "eventNumber",
+            timestamp,
+            version
+     FROM events
+     WHERE aggregate_id = $1
+     ORDER BY event_number ASC`,
     [aggregateId]
   );
   return rows;
 }
 
-export async function getEventsAfter(aggregateId: string, lastNumber: number): Promise<BankEvent[]> {
+export async function getEventsAfter(
+  aggregateId: string,
+  lastNumber: number
+): Promise<BankEvent[]> {
   const { rows } = await query<BankEvent>(
-    "SELECT event_id as \"eventId\", aggregate_id as \"aggregateId\", aggregate_type as \"aggregateType\", event_type as \"eventType\", event_data as \"eventData\", event_number as \"eventNumber\", timestamp, version FROM events WHERE aggregate_id = $1 AND event_number > $2 ORDER BY event_number ASC",
+    `SELECT event_id as "eventId",
+            aggregate_id as "aggregateId",
+            aggregate_type as "aggregateType",
+            event_type as "eventType",
+            event_data as "eventData",
+            event_number as "eventNumber",
+            timestamp,
+            version
+     FROM events
+     WHERE aggregate_id = $1 AND event_number > $2
+     ORDER BY event_number ASC`,
     [aggregateId, lastNumber]
   );
   return rows;
@@ -23,7 +46,16 @@ export async function getEventsAfter(aggregateId: string, lastNumber: number): P
 
 export async function getAllEvents(): Promise<BankEvent[]> {
   const { rows } = await query<BankEvent>(
-    "SELECT event_id as \"eventId\", aggregate_id as \"aggregateId\", aggregate_type as \"aggregateType\", event_type as \"eventType\", event_data as \"eventData\", event_number as \"eventNumber\", timestamp, version FROM events ORDER BY event_number ASC"
+    `SELECT event_id as "eventId",
+            aggregate_id as "aggregateId",
+            aggregate_type as "aggregateType",
+            event_type as "eventType",
+            event_data as "eventData",
+            event_number as "eventNumber",
+            timestamp,
+            version
+     FROM events
+     ORDER BY event_number ASC`
   );
   return rows;
 }
@@ -42,8 +74,19 @@ export async function appendEvent(
   const nextNumber = lastNumber + 1;
   const eventId = uuidv4();
 
-  const insertQuery =
-    "INSERT INTO events (event_id, aggregate_id, aggregate_type, event_type, event_data, event_number) VALUES ($1,$2,$3,$4,$5,$6) RETURNING event_id as \"eventId\", aggregate_id as \"aggregateId\", aggregate_type as \"aggregateType\", event_type as \"eventType\", event_data as \"eventData\", event_number as \"eventNumber\", timestamp, version";
+  const insertQuery = `
+    INSERT INTO events
+      (event_id, aggregate_id, aggregate_type, event_type, event_data, event_number)
+    VALUES ($1,$2,$3,$4,$5,$6)
+    RETURNING event_id as "eventId",
+              aggregate_id as "aggregateId",
+              aggregate_type as "aggregateType",
+              event_type as "eventType",
+              event_data as "eventData",
+              event_number as "eventNumber",
+              timestamp,
+              version
+  `;
 
   const { rows } = await client.query(insertQuery, [
     eventId,
@@ -56,11 +99,14 @@ export async function appendEvent(
 
   await ensureSnapshot(client, aggregateId, nextNumber);
 
-  const [event] = rows;
+  const [event] = rows as BankEvent[];
   return event;
 }
 
-export function applyEvent(state: BankAccountState | null, event: BankEvent): BankAccountState {
+export function applyEvent(
+  state: BankAccountState | null,
+  event: BankEvent
+): BankAccountState {
   switch (event.eventType) {
     case "AccountCreated": {
       return {
@@ -101,7 +147,9 @@ export function applyEvent(state: BankAccountState | null, event: BankEvent): Ba
   }
 }
 
-export async function loadLatestSnapshot(aggregateId: string): Promise<{ state: BankAccountState | null; lastEventNumber: number }> {
+export async function loadLatestSnapshot(
+  aggregateId: string
+): Promise<{ state: BankAccountState | null; lastEventNumber: number }> {
   const { rows } = await query(
     "SELECT snapshot_data, last_event_number FROM snapshots WHERE aggregate_id = $1",
     [aggregateId]
@@ -119,6 +167,7 @@ async function ensureSnapshot(client: any, aggregateId: string, currentEventNumb
   if (currentEventNumber % SNAPSHOT_INTERVAL !== 1) {
     return;
   }
+
   const { state } = await reconstructStateFromEvents(aggregateId);
   if (!state) return;
 
@@ -133,12 +182,16 @@ async function ensureSnapshot(client: any, aggregateId: string, currentEventNumb
     `INSERT INTO snapshots (snapshot_id, aggregate_id, snapshot_data, last_event_number)
      VALUES ($1,$2,$3,$4)
      ON CONFLICT (aggregate_id)
-     DO UPDATE SET snapshot_data = EXCLUDED.snapshot_data, last_event_number = EXCLUDED.last_event_number, created_at = NOW()`,
+     DO UPDATE SET snapshot_data = EXCLUDED.snapshot_data,
+                   last_event_number = EXCLUDED.last_event_number,
+                   created_at = NOW()`,
     [snapshotId, aggregateId, state, lastNumber]
   );
 }
 
-export async function reconstructStateFromEvents(aggregateId: string): Promise<{ state: BankAccountState | null; events: BankEvent[] }> {
+export async function reconstructStateFromEvents(
+  aggregateId: string
+): Promise<{ state: BankAccountState | null; events: BankEvent[] }> {
   const { state: snapshotState, lastEventNumber } = await loadLatestSnapshot(aggregateId);
   const events = await getEventsAfter(aggregateId, lastEventNumber);
   let currentState: BankAccountState | null = snapshotState;

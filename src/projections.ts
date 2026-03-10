@@ -22,7 +22,8 @@ async function projectAccountSummaries(event: BankEvent) {
   if (event.eventType === "AccountCreated") {
     const data = event.eventData;
     await query(
-      `INSERT INTO account_summaries (account_id, owner_name, balance, currency, status, version)
+      `INSERT INTO account_summaries
+         (account_id, owner_name, balance, currency, status, version)
        VALUES ($1,$2,$3,$4,$5,$6)
        ON CONFLICT (account_id) DO NOTHING`,
       [event.aggregateId, data.ownerName, data.initialBalance, data.currency, "OPEN", 1]
@@ -52,7 +53,8 @@ async function projectAccountSummaries(event: BankEvent) {
 
   await query(
     `UPDATE projection_status
-     SET last_processed_event_number_global = GREATEST(last_processed_event_number_global, $1)
+     SET last_processed_event_number_global =
+         GREATEST(last_processed_event_number_global, $1)
      WHERE name = $2`,
     [event.eventNumber, name]
   );
@@ -64,7 +66,8 @@ async function projectTransactionHistory(event: BankEvent) {
 
   if (event.eventType === "MoneyDeposited" || event.eventType === "MoneyWithdrawn") {
     await query(
-      `INSERT INTO transaction_history (transaction_id, account_id, type, amount, description, timestamp)
+      `INSERT INTO transaction_history
+         (transaction_id, account_id, type, amount, description, timestamp)
        VALUES ($1,$2,$3,$4,$5,$6)
        ON CONFLICT (transaction_id) DO NOTHING`,
       [
@@ -80,7 +83,8 @@ async function projectTransactionHistory(event: BankEvent) {
 
   await query(
     `UPDATE projection_status
-     SET last_processed_event_number_global = GREATEST(last_processed_event_number_global, $1)
+     SET last_processed_event_number_global =
+         GREATEST(last_processed_event_number_global, $1)
      WHERE name = $2`,
     [event.eventNumber, name]
   );
@@ -92,7 +96,16 @@ export async function rebuildProjections() {
   await query("TRUNCATE projection_status RESTART IDENTITY CASCADE");
 
   const { rows: events } = await query<BankEvent>(
-    "SELECT event_id as \"eventId\", aggregate_id as \"aggregateId\", aggregate_type as \"aggregateType\", event_type as \"eventType\", event_data as \"eventData\", event_number as \"eventNumber\", timestamp, version FROM events ORDER BY event_number ASC"
+    `SELECT event_id as "eventId",
+            aggregate_id as "aggregateId",
+            aggregate_type as "aggregateType",
+            event_type as "eventType",
+            event_data as "eventData",
+            event_number as "eventNumber",
+            timestamp,
+            version
+     FROM events
+     ORDER BY event_number ASC`
   );
   for (const ev of events) {
     await projectEvent(ev);
@@ -100,7 +113,9 @@ export async function rebuildProjections() {
 }
 
 export async function getProjectionStatus() {
-  const { rows: countRows } = await query<{ count: string }>("SELECT COUNT(*)::bigint as count FROM events");
+  const { rows: countRows } = await query<{ count: string }>(
+    "SELECT COUNT(*)::bigint as count FROM events"
+  );
   const totalEventsInStore = parseInt(countRows[0].count, 10);
 
   const { rows } = await query<{

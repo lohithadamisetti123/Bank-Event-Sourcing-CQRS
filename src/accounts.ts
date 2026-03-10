@@ -18,7 +18,9 @@ export async function createAccount(body: any) {
     return { status: 400, body: { message: "Missing fields" } };
   }
 
-  const { rows } = await query("SELECT 1 FROM account_summaries WHERE account_id = $1", [accountId]);
+  const { rows } = await query("SELECT 1 FROM account_summaries WHERE account_id = $1", [
+    accountId,
+  ]);
   if (rows.length > 0) {
     return { status: 409, body: { message: "Account already exists" } };
   }
@@ -61,7 +63,9 @@ export async function deposit(accountId: string, body: any) {
     return { status: 409, body: { message: "Account is closed" } };
   }
 
-  const dup = await query("SELECT 1 FROM transaction_history WHERE transaction_id = $1", [transactionId]);
+  const dup = await query("SELECT 1 FROM transaction_history WHERE transaction_id = $1", [
+    transactionId,
+  ]);
   if (dup.rows.length > 0) {
     return { status: 202, body: { message: "Duplicate transaction ignored" } };
   }
@@ -106,7 +110,9 @@ export async function withdraw(accountId: string, body: any) {
     return { status: 409, body: { message: "Insufficient funds" } };
   }
 
-  const dup = await query("SELECT 1 FROM transaction_history WHERE transaction_id = $1", [transactionId]);
+  const dup = await query("SELECT 1 FROM transaction_history WHERE transaction_id = $1", [
+    transactionId,
+  ]);
   if (dup.rows.length > 0) {
     return { status: 202, body: { message: "Duplicate transaction ignored" } };
   }
@@ -167,13 +173,19 @@ export async function closeAccount(accountId: string, body: any) {
 
 export async function getAccountSummary(accountId: string) {
   const { rows } = await query(
-    "SELECT account_id as \"accountId\", owner_name as \"ownerName\", balance, currency, status FROM account_summaries WHERE account_id = $1",
+    `SELECT account_id as "accountId",
+            owner_name as "ownerName",
+            balance,
+            currency,
+            status
+     FROM account_summaries
+     WHERE account_id = $1`,
     [accountId]
   );
   if (rows.length === 0) {
     return { status: 404, body: { message: "Account not found" } };
   }
-  const row = rows[0];
+  const row = rows[0] as any;
   return {
     status: 200,
     body: {
@@ -203,9 +215,14 @@ export async function getAccountEvents(accountId: string) {
 
 export async function getBalanceAt(accountId: string, timestamp: string) {
   const { rows } = await query(
-    `SELECT event_id as "eventId", aggregate_id as "aggregateId", aggregate_type as "aggregateType",
-            event_type as "eventType", event_data as "eventData", event_number as "eventNumber",
-            timestamp, version
+    `SELECT event_id as "eventId",
+            aggregate_id as "aggregateId",
+            aggregate_type as "aggregateType",
+            event_type as "eventType",
+            event_data as "eventData",
+            event_number as "eventNumber",
+            timestamp,
+            version
      FROM events
      WHERE aggregate_id = $1 AND timestamp <= $2
      ORDER BY event_number ASC`,
@@ -226,7 +243,8 @@ export async function getBalanceAt(accountId: string, timestamp: string) {
         version: 1,
       };
     } else {
-      state = require("./eventStore").applyEvent(state, ev);
+      const { applyEvent } = await import("./eventStore");
+      state = applyEvent(state, ev);
     }
   }
   return {
@@ -261,7 +279,11 @@ export async function getTransactions(accountId: string, page: number, pageSize:
   }
 
   const { rows } = await query(
-    `SELECT transaction_id as "transactionId", type, amount, description, timestamp
+    `SELECT transaction_id as "transactionId",
+            type,
+            amount,
+            description,
+            timestamp
      FROM transaction_history
      WHERE account_id = $1
      ORDER BY timestamp ASC
@@ -278,7 +300,7 @@ export async function getTransactions(accountId: string, page: number, pageSize:
       pageSize,
       totalPages,
       totalCount,
-      items: rows.map((r) => ({
+      items: rows.map((r: any) => ({
         transactionId: r.transactionId,
         type: r.type,
         amount: Number(r.amount),

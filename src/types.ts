@@ -6,15 +6,19 @@ export interface BankAccountState {
   balance: number;
   currency: string;
   status: AccountStatus;
-  version: number; // concurrency
+  version: number;
 }
 
-export type BankEventType = "AccountCreated" | "MoneyDeposited" | "MoneyWithdrawn" | "AccountClosed";
+export type BankEventType =
+  | "AccountCreated"
+  | "MoneyDeposited"
+  | "MoneyWithdrawn"
+  | "AccountClosed";
 
 export interface BankEvent {
   eventId: string;
   aggregateId: string;
-  aggregateType: string; // "BankAccount"
+  aggregateType: string;
   eventType: BankEventType;
   eventData: any;
   eventNumber: number;

@@ -1,9 +1,18 @@
-import "./env"; 
 import express from "express";
-import { createAccount, deposit, withdraw, closeAccount, getAccountSummary, getAccountEvents, getBalanceAt, getTransactions } from "./accounts";
+import dotenv from "dotenv";
+import {
+  createAccount,
+  deposit,
+  withdraw,
+  closeAccount,
+  getAccountSummary,
+  getAccountEvents,
+  getBalanceAt,
+  getTransactions,
+} from "./accounts";
 import { rebuildProjections, getProjectionStatus } from "./projections";
 
-
+dotenv.config();
 
 const app = express();
 app.use(express.json());
