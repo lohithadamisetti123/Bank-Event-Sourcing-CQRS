@@ -95,7 +95,7 @@ export async function rebuildProjections() {
   await query("TRUNCATE transaction_history RESTART IDENTITY CASCADE");
   await query("TRUNCATE projection_status RESTART IDENTITY CASCADE");
 
-  const { rows: events } = await query<BankEvent>(
+  const { rows: events } = await query(
     `SELECT event_id as "eventId",
             aggregate_id as "aggregateId",
             aggregate_type as "aggregateType",
@@ -107,23 +107,22 @@ export async function rebuildProjections() {
      FROM events
      ORDER BY event_number ASC`
   );
-  for (const ev of events) {
+  for (const ev of events as BankEvent[]) {
     await projectEvent(ev);
   }
 }
 
 export async function getProjectionStatus() {
-  const { rows: countRows } = await query<{ count: string }>(
+  const { rows: countRows } = await query(
     "SELECT COUNT(*)::bigint as count FROM events"
   );
   const totalEventsInStore = parseInt(countRows[0].count, 10);
 
-  const { rows } = await query<{
-    name: string;
-    last_processed_event_number_global: string;
-  }>("SELECT name, last_processed_event_number_global FROM projection_status");
+  const { rows } = await query(
+    "SELECT name, last_processed_event_number_global FROM projection_status"
+  );
 
-  const projections = rows.map((r) => ({
+  const projections = rows.map((r: any) => ({
     name: r.name,
     lastProcessedEventNumberGlobal: parseInt(r.last_processed_event_number_global, 10),
     lag: totalEventsInStore - parseInt(r.last_processed_event_number_global, 10),

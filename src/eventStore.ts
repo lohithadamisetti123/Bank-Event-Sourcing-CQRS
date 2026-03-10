@@ -6,7 +6,7 @@ const AGGREGATE_TYPE = "BankAccount";
 const SNAPSHOT_INTERVAL = 50;
 
 export async function getEventsForAggregate(aggregateId: string): Promise<BankEvent[]> {
-  const { rows } = await query<BankEvent>(
+  const { rows } = await query(
     `SELECT event_id as "eventId",
             aggregate_id as "aggregateId",
             aggregate_type as "aggregateType",
@@ -20,14 +20,14 @@ export async function getEventsForAggregate(aggregateId: string): Promise<BankEv
      ORDER BY event_number ASC`,
     [aggregateId]
   );
-  return rows;
+  return rows as BankEvent[];
 }
 
 export async function getEventsAfter(
   aggregateId: string,
   lastNumber: number
 ): Promise<BankEvent[]> {
-  const { rows } = await query<BankEvent>(
+  const { rows } = await query(
     `SELECT event_id as "eventId",
             aggregate_id as "aggregateId",
             aggregate_type as "aggregateType",
@@ -41,11 +41,11 @@ export async function getEventsAfter(
      ORDER BY event_number ASC`,
     [aggregateId, lastNumber]
   );
-  return rows;
+  return rows as BankEvent[];
 }
 
 export async function getAllEvents(): Promise<BankEvent[]> {
-  const { rows } = await query<BankEvent>(
+  const { rows } = await query(
     `SELECT event_id as "eventId",
             aggregate_id as "aggregateId",
             aggregate_type as "aggregateType",
@@ -57,7 +57,7 @@ export async function getAllEvents(): Promise<BankEvent[]> {
      FROM events
      ORDER BY event_number ASC`
   );
-  return rows;
+  return rows as BankEvent[];
 }
 
 export async function appendEvent(

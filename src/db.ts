@@ -9,6 +9,6 @@ export const pool = new Pool({
   connectionString: databaseUrl,
 });
 
-export async function query<T = any>(text: string, params?: any[]): Promise<{ rows: T[] }> {
-  return pool.query<T>(text, params);
+export async function query(text: string, params?: any[]): Promise<{ rows: any[] }> {
+  return pool.query(text, params);
 }

@@ -260,7 +260,7 @@ export async function getBalanceAt(accountId: string, timestamp: string) {
 export async function getTransactions(accountId: string, page: number, pageSize: number) {
   const offset = (page - 1) * pageSize;
 
-  const { rows: countRows } = await query<{ count: string }>(
+  const { rows: countRows } = await query(
     "SELECT COUNT(*)::bigint AS count FROM transaction_history WHERE account_id = $1",
     [accountId]
   );
