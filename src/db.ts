@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, QueryResult } from "pg";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
@@ -9,6 +9,9 @@ export const pool = new Pool({
   connectionString: databaseUrl,
 });
 
-export async function query<T = any>(text: string, params?: any[]): Promise<{ rows: T[] }> {
+export async function query<T = any>(
+  text: string,
+  params?: any[]
+): Promise<QueryResult<T>> {
   return pool.query<T>(text, params);
 }
