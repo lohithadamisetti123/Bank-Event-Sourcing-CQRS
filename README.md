@@ -106,21 +106,6 @@ Each event contains metadata and event data stored as JSON.
 └─ README.md
 
 ```
-
-### Important Files
-
-**index.ts**  
-Starts the Express server and defines routes.
-
-**eventStore.ts**  
-Handles event persistence, replaying events, and snapshots.
-
-**projections.ts**  
-Updates read models (`account_summaries`, `transaction_history`).
-
-**accounts.ts**  
-Implements command handlers and query endpoints.
-
 ---
 
 ## Running the Project
@@ -346,11 +331,18 @@ When rebuilding state, the system loads the snapshot first and replays only newe
 ---
 
 ## Screenshots
-![DOCKER Built status](assets/image2.png)
-![API Health](assets/image1.png)
-![Account Creation](assets/image3.png)
-![Transactions](assets/image.png)
 
+### Docker Build Status
+![Docker Built Status](assets/image2.png)
+
+### API Health Check
+![API Health](assets/image1.png)
+
+### Account Creation
+![Account Creation](assets/image3.png)
+
+### Transactions
+![Transactions](assets/image.png)
 
 ---
 
