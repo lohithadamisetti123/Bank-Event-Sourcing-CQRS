@@ -114,7 +114,7 @@ Each event contains metadata and event data stored as JSON.
 
 ```
 
-git clone [https://github.com/lohithadamisetti123/Bank-Event-Sourcing-CQRS.git](https://github.com/lohithadamisetti123/Bank-Event-Sourcing-CQRS.git)
+git clone https://github.com/lohithadamisetti123/Bank-Event-Sourcing-CQRS.git
 cd Bank-Event-Sourcing-CQRS
 
 ```
